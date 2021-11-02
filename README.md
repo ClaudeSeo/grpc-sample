@@ -1,1 +1,1 @@
-# server-template
+# grpc-sample
