@@ -1,5 +1,7 @@
 import { Metadata, status } from '@grpc/grpc-js';
+import { ValidationError } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { last } from 'lodash';
 
 class BaseError extends RpcException {
   constructor(
@@ -47,3 +49,45 @@ export const errorToJson = (err: Error) => ({
   message: err.message,
   stack: err.stack,
 });
+
+const exceptionChildrenFactory = (
+  children: ValidationError['children']
+): BaseError | null => {
+  if (!children || children.length === 0) {
+    return null;
+  }
+
+  const [error, ...otherErrors] = children;
+
+  if (error.constraints) {
+    return new BadRequestError(last(Object.values(error.constraints))!);
+  }
+
+  if (error.children) {
+    return exceptionChildrenFactory(error.children);
+  }
+
+  return exceptionChildrenFactory(otherErrors);
+};
+
+/** class-validator 에러 메세지 추출 */
+export const exceptionFactory = (errors: ValidationError[]): BaseError => {
+  if (errors.length === 0) {
+    return new BadRequestError('유효성 검사에 실패했습니다.');
+  }
+
+  const [error, ...otherErrors] = errors;
+
+  if (error.constraints) {
+    return new BadRequestError(last(Object.values(error.constraints))!);
+  }
+
+  if (error.children) {
+    const childrenErrors = exceptionChildrenFactory(error.children);
+    if (childrenErrors) {
+      return childrenErrors;
+    }
+  }
+
+  return exceptionFactory(otherErrors);
+};

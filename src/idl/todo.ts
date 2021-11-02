@@ -4,35 +4,51 @@ import { util, configure } from 'protobufjs/minimal';
 import * as Long from 'long';
 import { Observable } from 'rxjs';
 
-export const protobufPackage = 'user';
+export const protobufPackage = 'grpc_sample';
 
-export interface User {
-  name: string;
+export interface GetTodoRequest {
+  todoId: string;
 }
 
-export interface FindByIdRequest {
+export interface GetTodoResponse {
   id: string;
+  categoryId: string;
+  title: string;
+  content: string;
+  active: boolean;
 }
 
-export const USER_PACKAGE_NAME = 'user';
-
-export interface UserServiceClient {
-  findById(request: FindByIdRequest): Observable<User>;
+export interface GetTodoAllRequest {
+  categoryId?: string | undefined;
+  title?: string | undefined;
+  content?: string | undefined;
 }
 
-export interface UserServiceController {
-  findById(request: FindByIdRequest): Promise<User> | Observable<User> | User;
+export const GRPC_SAMPLE_PACKAGE_NAME = 'grpc_sample';
+
+export interface TodoServiceClient {
+  getTodo(request: GetTodoRequest): Observable<GetTodoResponse>;
+
+  getTodoAll(request: GetTodoAllRequest): Observable<GetTodoResponse>;
 }
 
-export function UserServiceControllerMethods() {
+export interface TodoServiceController {
+  getTodo(
+    request: GetTodoRequest
+  ): Promise<GetTodoResponse> | Observable<GetTodoResponse> | GetTodoResponse;
+
+  getTodoAll(request: GetTodoAllRequest): Observable<GetTodoResponse>;
+}
+
+export function TodoServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ['findById'];
+    const grpcMethods: string[] = ['getTodo', 'getTodoAll'];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(
         constructor.prototype,
         method
       );
-      GrpcMethod('UserService', method)(
+      GrpcMethod('TodoService', method)(
         constructor.prototype[method],
         method,
         descriptor
@@ -44,7 +60,7 @@ export function UserServiceControllerMethods() {
         constructor.prototype,
         method
       );
-      GrpcStreamMethod('UserService', method)(
+      GrpcStreamMethod('TodoService', method)(
         constructor.prototype[method],
         method,
         descriptor
@@ -53,7 +69,7 @@ export function UserServiceControllerMethods() {
   };
 }
 
-export const USER_SERVICE_NAME = 'UserService';
+export const TODO_SERVICE_NAME = 'TodoService';
 
 // If you get a compile-error about 'Constructor<Long> and ... have no overlap',
 // add '--ts_proto_opt=esModuleInterop=true' as a flag when calling 'protoc'.

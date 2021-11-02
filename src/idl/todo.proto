@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package grpc_sample;
+
+service TodoService {
+  rpc GetTodo(GetTodoRequest) returns (GetTodoResponse) {}
+  rpc GetTodoAll(GetTodoAllRequest) returns (stream GetTodoResponse) {}
+}
+
+message GetTodoRequest {
+  string todo_id = 1;
+}
+  
+message GetTodoResponse {
+  string id = 1;
+  string category_id = 2;
+  string title = 3;
+  string content = 4;
+  bool active = 5;
+}
+
+message GetTodoAllRequest {
+  optional string category_id = 1;
+  optional string title = 2;
+  optional string content = 3;
+}
